@@ -27,6 +27,7 @@ import jenkins.scm.api.SCMSourceCriteria;
 import jenkins.scm.api.SCMSourceDescriptor;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * One Entire repository as a multibranch source. Branches come from the Entire API, the
@@ -37,6 +38,7 @@ public class EntireSCMSource extends SCMSource {
 
     private final String credentialsId;
     private final String repository;
+    private String gitTool;
 
     @DataBoundConstructor
     public EntireSCMSource(String credentialsId, String repository) {
@@ -51,6 +53,20 @@ public class EntireSCMSource extends SCMSource {
     /** Repository full name, {@code project/repo}, or its id. */
     public String getRepository() {
         return repository;
+    }
+
+    /**
+     * Name of the git tool to check out with. Agents need {@code git-remote-entire} on git's
+     * {@code PATH}; a git tool whose installer provides it is the usual way to get it there.
+     */
+    @CheckForNull
+    public String getGitTool() {
+        return gitTool;
+    }
+
+    @DataBoundSetter
+    public void setGitTool(@CheckForNull String gitTool) {
+        this.gitTool = gitTool == null || gitTool.isBlank() ? null : gitTool.trim();
     }
 
     EntirePluginCredentials credentials() throws IOException {
@@ -147,7 +163,7 @@ public class EntireSCMSource extends SCMSource {
         } catch (IOException e) {
             throw new IllegalStateException("cannot resolve Entire repository " + repository, e);
         }
-        return new GitSCMBuilder<>(head, revision, remote, null).build();
+        return new GitSCMBuilder<>(head, revision, remote, null).withGitTool(gitTool).build();
     }
 
     @Extension
